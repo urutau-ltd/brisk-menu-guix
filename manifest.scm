@@ -7,7 +7,8 @@
           (list "git"
                 "emacs"
                 "emacs-evil"
-                "ccls"
+                "dbus-glib"
+                "libnotify"
                 "gobject-introspection"
                 "itstool"
                 "desktop-file-utils"
@@ -23,6 +24,10 @@
                 "cairo"
                 "gtk+"
                 "libx11"
+                "yelp-tools"
+                "mate-desktop"
+                "mate-panel"
                 "pango"))
         (package->development-manifest
-          (specification->package "guile"))))
+          (specification->package "guile"
+                                  "ccls"))))
