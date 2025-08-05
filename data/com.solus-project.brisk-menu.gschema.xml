@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="brisk-menu">
   <enum id="com.solus-project.brisk-menu.SearchPosition">
-      <value nick="bottom" value="1" />
-      <value nick="top" value="2" />
-      <value nick="automatic" value="4" />
+    <value nick="bottom" value="1" />
+    <value nick="top" value="2" />
+    <value nick="automatic" value="4" />
   </enum>
   <enum id="com.solus-project.brisk-menu.WindowType">
-      <value nick="classic" value="1" />
-      <value nick="dash" value="2" />
-      <value nick="automatic" value="4" />
+    <value nick="classic" value="1" />
+    <value nick="dash" value="2" />
+    <value nick="automatic" value="4" />
   </enum>
-  <schema path="/com/solus-project/brisk-menu/" id="com.solus-project.brisk-menu">
+  <schema
+    path="/com/solus-project/brisk-menu/"
+    id="com.solus-project.brisk-menu"
+  >
     <key type="as" name="pinned-shortcuts">
       <default>['matecc.desktop']</default>
       <summary>Pinned Shortcuts</summary>
-      <description>These shortcuts will appear in the Brisk Menu sidepane.</description>
+      <description
+      >These shortcuts will appear in the Brisk Menu sidepane.</description>
     </key>
     <key type="as" name="favourites">
       <default>['']</default>
@@ -24,14 +28,19 @@
     <key type="b" name="dark-theme">
       <default>false</default>
       <summary>Use dark theme variant for Brisk Menu</summary>
-      <description>Use the dark theme for Brisk Menu aka night mode</description>
+      <description
+      >Use the dark theme for Brisk Menu aka night mode</description>
     </key>
     <key type="b" name="rollover-activate">
       <default>false</default>
       <summary>Activate categories with mouse rollover</summary>
-      <description>Categories will be activated by hovering with the mouse</description>
+      <description
+      >Categories will be activated by hovering with the mouse</description>
     </key>
-    <key enum="com.solus-project.brisk-menu.SearchPosition" name="search-position">
+    <key
+      enum="com.solus-project.brisk-menu.SearchPosition"
+      name="search-position"
+    >
       <default>'top'</default>
       <summary>Search bar position</summary>
       <description>Where the search bar will appear in the menu</description>
@@ -44,7 +53,8 @@
     <key type="s" name="hot-key">
       <default>'Super_L'</default>
       <summary>Keyboard shortcut</summary>
-      <description>Accelerator key for opening and closing the menu.</description>
+      <description
+      >Accelerator key for opening and closing the menu.</description>
     </key>
     <key type="s" name="label-text">
       <default>""</default>
@@ -64,7 +74,8 @@
     <key type="b" name="icon-symbolic">
       <default>true</default>
       <summary>Menu button uses symbolic icon</summary>
-      <description>Use a symbolic, i.e., low-color, icon variant in menu button.</description>
+      <description
+      >Use a symbolic, i.e., low-color, icon variant in menu button.</description>
     </key>
   </schema>
 </schemalist>

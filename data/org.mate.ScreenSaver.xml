@@ -2,10 +2,9 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="org.mate.ScreenSaver">
-    <method name="Lock">
-    </method>
+    <method name="Lock"> </method>
     <method name="GetActive">
-      <arg name="value" direction="out" type="b"/>
+      <arg name="value" direction="out" type="b" />
     </method>
   </interface>
 </node>

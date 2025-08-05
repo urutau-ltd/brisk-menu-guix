@@ -3,13 +3,13 @@
 <!-- GDBus 2.48.1 -->
 <node>
   <interface name="org.gnome.SessionManager">
-    <method name="Shutdown"/>
-    <method name="Reboot"/>
+    <method name="Shutdown" />
+    <method name="Reboot" />
     <method name="CanShutdown">
-      <arg type="b" name="is_available" direction="out"/>
+      <arg type="b" name="is_available" direction="out" />
     </method>
     <method name="Logout">
-      <arg type="u" name="mode" direction="in"/>
+      <arg type="u" name="mode" direction="in" />
     </method>
   </interface>
 </node>
