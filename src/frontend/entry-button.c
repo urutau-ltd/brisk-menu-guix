@@ -203,7 +203,10 @@ static void brisk_menu_entry_drag_end(__brisk_unused__ GtkWidget *widget, GdkDra
 {
         GIcon *icon = NULL;
 
-        g_idle_add((GSourceFunc)hide_toplevel, widget);
+        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                        (GSourceFunc)hide_toplevel,
+                        g_object_ref(widget),
+                        g_object_unref);
 
         icon = g_object_get_data(G_OBJECT(context), "_drag_icon_brisk");
         if (!icon) {
@@ -252,7 +255,7 @@ static gboolean brisk_menu_entry_button_release_event(GtkWidget *widget,
         }
 
         return GTK_WIDGET_CLASS(brisk_menu_entry_button_parent_class)
-            ->button_press_event(widget, event_button);
+            ->button_release_event(widget, event_button);
 }
 
 void brisk_menu_entry_button_launch(BriskMenuEntryButton *self)
