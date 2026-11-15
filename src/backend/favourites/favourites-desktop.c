@@ -32,8 +32,6 @@ typedef enum {
         PIN_STATUS_UNPINNED = 2,
 } DesktopPinStatus;
 
-extern BriskFavouritesBackend * BriskFavouritesBackendInstance;
-
 /**
  * get_desktop_item_source:
  *
@@ -59,15 +57,20 @@ static GFile *get_desktop_item_source(BriskItem *item)
  */
 static gchar *get_desktop_item_target_path(GFile *file)
 {
+        const gchar *desktop_dir = NULL;
+        autofree(gchar) *basename = NULL;
+
         if (!g_file_query_exists(file, NULL)) {
                 return NULL;
         }
-        autofree(gchar) *basename = g_file_get_basename(file);
 
-        return g_build_path(G_DIR_SEPARATOR_S,
-                            g_get_user_special_dir(G_USER_DIRECTORY_DESKTOP),
-                            basename,
-                            NULL);
+        desktop_dir = g_get_user_special_dir(G_USER_DIRECTORY_DESKTOP);
+        if (!desktop_dir) {
+                return NULL;
+        }
+
+        basename = g_file_get_basename(file);
+        return g_build_filename(desktop_dir, basename, NULL);
 }
 
 /**
@@ -80,6 +83,9 @@ static GFile *get_desktop_item_target(GFile *file)
         autofree(gchar) *path = NULL;
 
         path = get_desktop_item_target_path(file);
+        if (!path) {
+                return NULL;
+        }
         return g_file_new_for_path(path);
 }
 
@@ -91,13 +97,15 @@ static void brisk_favourites_backend_action_desktop_pin(__brisk_unused__ GSimple
                                                         __brisk_unused__ GVariant *parameter,
                                                         BriskFavouritesBackend *self)
 {
-        self = BriskFavouritesBackendInstance;
+        BriskItem *item = self->active_item;
         autofree(GFile) *source = NULL;
         autofree(GFile) *dest = NULL;
         autofree(GError) *error = NULL;
         autofree(gchar) *path = NULL;
 
-        source = get_desktop_item_source(self->active_item);
+        self->active_item = NULL;
+
+        source = get_desktop_item_source(item);
         if (!source) {
                 return;
         }
@@ -138,12 +146,14 @@ static void brisk_favourites_backend_action_desktop_unpin(__brisk_unused__ GSimp
                                                           __brisk_unused__ GVariant *parameter,
                                                           BriskFavouritesBackend *self)
 {
-        self = BriskFavouritesBackendInstance;
+        BriskItem *item = self->active_item;
         autofree(GFile) *source = NULL;
         autofree(GFile) *dest = NULL;
         autofree(GError) *error = NULL;
 
-        source = get_desktop_item_source(self->active_item);
+        self->active_item = NULL;
+
+        source = get_desktop_item_source(item);
         if (!source) {
                 return;
         }

@@ -51,6 +51,7 @@ struct _BriskAppsBackend {
         BriskBackend parent;
         GAppInfoMonitor *monitor;
         guint monitor_source_id;
+        guint load_source_id;
         gboolean loaded;
         GSList *pending_sections;
 };
@@ -79,8 +80,6 @@ DEF_AUTOFREE(MateMenuTreeIter, matemenu_tree_iter_unref)
 DEF_AUTOFREE(MateMenuTree, g_object_unref)
 DEF_AUTOFREE(GDesktopAppInfo, g_object_unref)
 DEF_AUTOFREE(GError, g_error_free)
-
-BriskAppsBackend *BriskAppsBackendInstance = NULL;
 
 /**
  * Due to a glib weirdness we must fully invalidate the monitor's cache
@@ -126,14 +125,28 @@ static GMenu *brisk_apps_backend_get_item_actions(BriskBackend *backend, BriskIt
                                                   GActionGroup *group)
 {
         GMenu *ret = NULL;
-        GDesktopAppInfo *info = NULL;
+        autofree(GDesktopAppInfo) *info = NULL;
+        const gchar *const *actions = NULL;
+        guint n_actions = 0;
+
+        info = g_desktop_app_info_new(brisk_item_get_id(item));
+        if (!info) {
+                return NULL;
+        }
+
+        actions = g_desktop_app_info_list_actions(info);
+        if (!actions) {
+                return NULL;
+        }
+
+        n_actions = g_strv_length((gstrv *)actions);
+        if (n_actions == 0) {
+                return NULL;
+        }
 
         ret = g_menu_new();
 
-        info = g_desktop_app_info_new(brisk_item_get_id(item));
-        const gchar *const *actions = g_desktop_app_info_list_actions(info);
-
-        for (guint i = 0; i < g_strv_length((gstrv *)actions); i++) {
+        for (guint i = 0; i < n_actions; i++) {
                 autofree(gchar) *action_id = NULL;
                 autofree(gchar) *menu_id = NULL;
                 const gchar *action_name = NULL;
@@ -142,6 +155,9 @@ static GMenu *brisk_apps_backend_get_item_actions(BriskBackend *backend, BriskIt
                 action_id = g_strdup_printf("apps.action-%d", i);
                 menu_id = g_strdup_printf("brisk-context-items.%s", action_id);
                 action_name = g_desktop_app_info_get_action_name(info, actions[i]);
+                if (!action_name) {
+                        action_name = actions[i];
+                }
 
                 /* Make the action now */
                 action = g_simple_action_new(action_id, NULL);
@@ -149,11 +165,11 @@ static GMenu *brisk_apps_backend_get_item_actions(BriskBackend *backend, BriskIt
 
                 g_object_set_data_full(G_OBJECT(action),
                                        "__aname",
-                                       (gpointer)g_strdup(actions[i]),
+                                       g_strdup(actions[i]),
                                        g_free);
                 g_object_set_data_full(G_OBJECT(action),
                                        "__appinfo",
-                                       (gpointer)info,
+                                       g_object_ref(info),
                                        g_object_unref);
                 g_signal_connect(action,
                                  "activate",
@@ -175,6 +191,15 @@ static GMenu *brisk_apps_backend_get_item_actions(BriskBackend *backend, BriskIt
 static void brisk_apps_backend_dispose(GObject *obj)
 {
         BriskAppsBackend *self = BRISK_APPS_BACKEND(obj);
+
+        if (self->monitor_source_id > 0) {
+                g_source_remove(self->monitor_source_id);
+                self->monitor_source_id = 0;
+        }
+        if (self->load_source_id > 0) {
+                g_source_remove(self->load_source_id);
+                self->load_source_id = 0;
+        }
 
         g_clear_object(&self->monitor);
         brisk_apps_backend_reset_pending(self);
@@ -215,7 +240,6 @@ static void brisk_apps_backend_init(BriskAppsBackend *self)
                                  "changed",
                                  G_CALLBACK(brisk_apps_backend_changed),
                                  self);
-        BriskAppsBackendInstance = self;
 }
 
 /**
@@ -261,7 +285,7 @@ static gint brisk_apps_backend_sort_section(gconstpointer a, gconstpointer b)
  */
 static gboolean brisk_apps_backend_init_menus(BriskAppsBackend *self)
 {
-        self = BriskAppsBackendInstance;
+        self->load_source_id = 0;
         brisk_apps_backend_reset_pending(self);
 
         /* Now load them again */
@@ -324,9 +348,12 @@ static void brisk_apps_backend_launch_action(GSimpleAction *action,
                                              __brisk_unused__ GVariant *parameter,
                                              BriskBackend *backend)
 {
-        autofree(GDesktopAppInfo) *app_info = g_object_get_data(G_OBJECT(action), "__appinfo");
+        GDesktopAppInfo *app_info = g_object_get_data(G_OBJECT(action), "__appinfo");
         const gchar *action_name = g_object_get_data(G_OBJECT(action), "__aname");
-        g_assert(app_info != NULL);
+
+        g_return_if_fail(app_info != NULL);
+        g_return_if_fail(action_name != NULL);
+
         brisk_backend_hide_menu(backend);
         g_desktop_app_info_launch_action(app_info, action_name, NULL);
 }
@@ -347,7 +374,8 @@ static gboolean brisk_apps_backend_load(BriskBackend *backend)
         self->loaded = TRUE;
 
         /* Load ourselves a bit later */
-        g_idle_add_full(G_PRIORITY_LOW, (GSourceFunc)brisk_apps_backend_init_menus, self, NULL);
+        self->load_source_id =
+            g_idle_add_full(G_PRIORITY_LOW, (GSourceFunc)brisk_apps_backend_init_menus, self, NULL);
 
         /* Allow the monitor to now work */
         brisk_apps_backend_reset_monitor();

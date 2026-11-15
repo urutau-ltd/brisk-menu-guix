@@ -172,7 +172,7 @@ gchar *brisk_item_get_uri(BriskItem *item)
 {
         g_assert(item != NULL);
         BriskItemClass *klazz = BRISK_ITEM_GET_CLASS(item);
-        g_return_val_if_fail(klazz->launch != NULL, NULL);
+        g_return_val_if_fail(klazz->get_uri != NULL, NULL);
         return klazz->get_uri(item);
 }
 

@@ -19,8 +19,6 @@ BRISK_END_PEDANTIC
 
 static void brisk_menu_window_settings_changed(GSettings *settings, const gchar *key, gpointer v);
 
-extern BriskMenuWindow * BriskMenuWindowInstance;
-
 void brisk_menu_window_init_settings(BriskMenuWindow *self)
 {
         GtkSettings *gtk_settings = NULL;
@@ -52,8 +50,12 @@ void brisk_menu_window_pump_settings(BriskMenuWindow *self)
 
 static void brisk_menu_window_settings_changed(GSettings *settings, const gchar *key, gpointer v)
 {
-        BriskMenuWindow *self = BriskMenuWindowInstance;
+        BriskMenuWindow *self = v;
         autofree(gchar) *value = NULL;
+
+        if (!self) {
+                return;
+        }
 
         if (g_str_equal(key, "search-position")) {
                 self->search_position = g_settings_get_enum(settings, key);
