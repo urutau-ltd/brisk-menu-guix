@@ -52,7 +52,10 @@ void brisk_menu_window_logout(BriskMenuWindow *self, __brisk_unused__ gpointer v
 {
         gtk_widget_hide(GTK_WIDGET(self));
 
-        g_idle_add((GSourceFunc)brisk_menu_window_logout_real, self);
+        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                        (GSourceFunc)brisk_menu_window_logout_real,
+                        g_object_ref(self),
+                        g_object_unref);
 }
 
 static void brisk_menu_window_shutdown_cb(__brisk_unused__ GObject *obj, GAsyncResult *res,
@@ -86,7 +89,10 @@ static inline gboolean brisk_menu_window_shutdown_real(BriskMenuWindow *self)
 void brisk_menu_window_shutdown(BriskMenuWindow *self, __brisk_unused__ gpointer v)
 {
         gtk_widget_hide(GTK_WIDGET(self));
-        g_idle_add((GSourceFunc)brisk_menu_window_shutdown_real, self);
+        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                        (GSourceFunc)brisk_menu_window_shutdown_real,
+                        g_object_ref(self),
+                        g_object_unref);
 }
 
 static void brisk_menu_window_lock_cb(__brisk_unused__ GObject *obj, GAsyncResult *res, gpointer v)
@@ -115,7 +121,10 @@ static inline gboolean brisk_menu_window_lock_real(BriskMenuWindow *self)
 void brisk_menu_window_lock(BriskMenuWindow *self, __brisk_unused__ gpointer v)
 {
         gtk_widget_hide(GTK_WIDGET(self));
-        g_idle_add((GSourceFunc)brisk_menu_window_lock_real, self);
+        g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,
+                        (GSourceFunc)brisk_menu_window_lock_real,
+                        g_object_ref(self),
+                        g_object_unref);
 }
 
 gboolean brisk_menu_window_setup_session_idle(gpointer v)
