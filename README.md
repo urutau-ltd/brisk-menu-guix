@@ -45,14 +45,12 @@ brisk-menu was originally a **collaborative** project between
 - Fully correct `X11` WM integration (grab policy and window types)
 - Not Python.
 
-**Future (v0.7.0)**
+**Planned**
 
 - Settings UI to control further visual aspects (labels/icons/options)
 - Improved styling for the window edge + search entry
 
-The applet is currently X11-only. Wayland support would require replacing the
-X11-specific popup placement and global-hotkey code, so it is not part of this
-maintenance series.
+See [TODO.md](TODO.md) for longer-term ideas, including the X11/Wayland notes.
 
 ![screenshot_context](https://raw.githubusercontent.com/getsolus/brisk-menu/master/.github/context.png)
 
