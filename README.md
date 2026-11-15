@@ -4,14 +4,10 @@
 
 > [!NOTE]
 > Brisk Menu is no longer maintained by Solus or Ubuntu MATE. This community
-> fork keeps it working on current MATE releases and collects bug fixes,
-> compatibility work, and quality-of-life improvements.
+> fork keeps it working on current MATE releases and is maintained as a bug-fix
+> and quality-of-life project only.
 >
-> The project is considered feature-complete. No new features are planned beyond
-> bug fixes and quality-of-life improvements.
->
-> Current release: **0.6.5**, tested with **MATE 1.28**. The applet is currently
-> X11-only; Wayland is not supported.
+> Current release: **0.6.5**, tested with **MATE 1.28**.
 
 brisk-menu is a modern and efficient menu designed to improve the MATE Desktop
 Environment with modern, first-class options.
@@ -54,9 +50,9 @@ brisk-menu was originally a **collaborative** project between
 - Settings UI to control further visual aspects (labels/icons/options)
 - Improved styling for the window edge + search entry
 
-No other features are planned. Wayland support would require replacing the
-X11-specific popup placement and global-hotkey code, so it is not part of the
-current maintenance series.
+The applet is currently X11-only. Wayland support would require replacing the
+X11-specific popup placement and global-hotkey code, so it is not part of this
+maintenance series.
 
 ![screenshot_context](https://raw.githubusercontent.com/getsolus/brisk-menu/master/.github/context.png)
 
@@ -66,7 +62,7 @@ current maintenance series.
 
 - GTK 3.22 or greater
 - GLib 2.50 or greater
-- MATE 1.24 or greater (tested with MATE 1.28)
+- MATE 1.24 or greater
 - `meson` and `ninja`
 - `pkg-config`
 - libnotify
