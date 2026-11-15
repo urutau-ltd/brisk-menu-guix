@@ -8,3 +8,4 @@ Description=Brisk Menu Factory
 Name=Brisk Menu
 Description=An efficient menu for the MATE desktop
 Icon=start-here
+Platforms=X11;

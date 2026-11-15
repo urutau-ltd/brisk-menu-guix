@@ -45,6 +45,7 @@ static void brisk_menu_applet_create_window(BriskMenuApplet *self);
 
 /* Handle applet settings */
 void brisk_menu_applet_init_settings(BriskMenuApplet *self);
+static gchar *brisk_menu_applet_get_icon_name(BriskMenuApplet *self);
 static void brisk_menu_applet_update_icon(BriskMenuApplet *self);
 static void brisk_menu_applet_settings_changed(GSettings *settings, const gchar *key, gpointer v);
 static void brisk_menu_applet_notify_fail(const gchar *title, const gchar *body);
@@ -251,20 +252,33 @@ static gboolean button_press_cb(BriskMenuApplet *self, GdkEvent *event, __brisk_
         return GDK_EVENT_STOP;
 }
 
-static void brisk_menu_applet_update_icon(BriskMenuApplet *self)
+/**
+ * Return the icon name requested by the settings, applying the symbolic
+ * suffix only when it is not already present.
+ */
+static gchar *brisk_menu_applet_get_icon_name(BriskMenuApplet *self)
 {
-        autofree(gchar) *icon_name = NULL, *icon_name_tmp = NULL;
+        gchar *icon_name = NULL;
 
         icon_name = g_settings_get_string(self->settings, "icon-name");
-        if (g_str_equal(icon_name, "")) {
+        if (!icon_name || *icon_name == '\0') {
                 g_free(icon_name);
                 icon_name = g_strdup("start-here");
         }
-        if (g_settings_get_boolean(self->settings, "icon-symbolic")) {
-                icon_name_tmp = g_strdup(icon_name);
+        if (g_settings_get_boolean(self->settings, "icon-symbolic") &&
+            !g_str_has_suffix(icon_name, "-symbolic")) {
+                gchar *symbolic_name = g_strconcat(icon_name, "-symbolic", NULL);
                 g_free(icon_name);
-                icon_name = g_strconcat(icon_name_tmp, "-symbolic", NULL);
+                return symbolic_name;
         }
+        return icon_name;
+}
+
+static void brisk_menu_applet_update_icon(BriskMenuApplet *self)
+{
+        autofree(gchar) *icon_name = NULL;
+
+        icon_name = brisk_menu_applet_get_icon_name(self);
         gtk_image_set_from_icon_name(GTK_IMAGE(self->image), icon_name, GTK_ICON_SIZE_MENU);
 }
 
@@ -402,14 +416,10 @@ static void brisk_menu_applet_notify_fail(const gchar *title, const gchar *body)
 
 void brisk_menu_applet_show_about(__brisk_unused__ GtkAction *action, BriskMenuApplet *applet)
 {
-        static const gchar *copyright_string = "Copyright © 2016-2025 Brisk Menu Developers";
+        static const gchar *copyright_string = "Copyright © 2016-2026 Brisk Menu Developers";
         autofree(gchar) *icon_name = NULL;
 
-        icon_name = g_settings_get_string(applet->settings, "icon-name");
-        if (g_str_equal(icon_name, "")) {
-                g_free(icon_name);
-                icon_name = g_strdup("start-here");
-        }
+        icon_name = brisk_menu_applet_get_icon_name(applet);
 
         gtk_show_about_dialog(NULL,
                               "authors",
@@ -425,7 +435,7 @@ void brisk_menu_applet_show_about(__brisk_unused__ GtkAction *action, BriskMenuA
                               "website",
                               PACKAGE_URL,
                               "website-label",
-                              "Solus Project",
+                              _("Brisk Menu on Codeberg"),
                               NULL);
 }
 

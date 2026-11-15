@@ -1,0 +1,2 @@
+<menuitem name="EditMenus" action="EditMenus" />
+<menuitem name="About" action="ShowAbout" />

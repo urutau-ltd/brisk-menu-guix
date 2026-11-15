@@ -67,11 +67,9 @@ static const GtkActionEntry brisk_actions[] = { {
 G_GNUC_END_IGNORE_DEPRECATIONS
 
 /**
- * UI definition for our right click menu
+ * Resource path for the right click menu
  */
-#define BRISK_MENU_XML                                                                             \
-        "<menuitem name=\"Edit Menus\" action=\"EditMenus\" />"                                    \
-        "<menuitem name=\"About\" action=\"ShowAbout\" />"
+#define BRISK_MENU_UI_RESOURCE "/com/solus-project/brisk/menu/applet-menu.ui"
 
 static gboolean brisk_menu_applet_factory(MatePanelApplet *applet, const gchar *id,
                                           __brisk_unused__ gpointer v)
@@ -98,7 +96,7 @@ static gboolean brisk_menu_applet_factory(MatePanelApplet *applet, const gchar *
         group = gtk_action_group_new("Brisk Menu Actions");
         gtk_action_group_set_translation_domain(group, GETTEXT_PACKAGE);
         gtk_action_group_add_actions(group, brisk_actions, G_N_ELEMENTS(brisk_actions), applet);
-        mate_panel_applet_setup_menu(applet, BRISK_MENU_XML, group);
+        mate_panel_applet_setup_menu_from_resource(applet, BRISK_MENU_UI_RESOURCE, group);
         G_GNUC_END_IGNORE_DEPRECATIONS
 
         g_set_application_name(_("Brisk Menu Launcher"));
