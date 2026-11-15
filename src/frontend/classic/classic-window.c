@@ -73,13 +73,13 @@ static const gchar *brisk_classic_window_get_display_name(__brisk_unused__ Brisk
 
 static void brisk_classic_window_update_screen_position(BriskMenuWindow *self)
 {
-        GdkScreen *screen = NULL;
+        GdkDisplay *display = NULL;
+        GdkMonitor *monitor = NULL;
         GtkAllocation relative_alloc = { 0 };
         GdkWindow *window = NULL;
         GdkRectangle geom = { 0 };
         gint relative_x, relative_y = 0;      /* Real X, Y of the applet, on screen */
         gint window_width, window_height = 0; /* Window width & height */
-        gint mon = 0;                         /* Monitor to display on */
         gint window_x, window_y = 0;          /* Target X, Y */
 
         if (!self->relative_to) {
@@ -106,10 +106,16 @@ static void brisk_classic_window_update_screen_position(BriskMenuWindow *self)
         /* Find out the window size */
         gtk_window_get_size(GTK_WINDOW(self), &window_width, &window_height);
 
-        /* Grab the geometry for the monitor we're currently on */
-        screen = gtk_widget_get_screen(self->relative_to);
-        mon = gdk_screen_get_monitor_at_point(screen, relative_x, relative_y);
-        gdk_screen_get_monitor_geometry(screen, mon, &geom);
+        /* Grab the work area for the monitor we're currently on */
+        display = gtk_widget_get_display(self->relative_to);
+        monitor = gdk_display_get_monitor_at_point(display, relative_x, relative_y);
+        if (!monitor) {
+                monitor = gdk_display_get_primary_monitor(display);
+        }
+        if (!monitor) {
+                return;
+        }
+        gdk_monitor_get_workarea(monitor, &geom);
 
         switch (self->position) {
         case GTK_POS_LEFT:

@@ -74,7 +74,8 @@ static void brisk_menu_sidebar_scroller_init(BriskMenuSidebarScroller *self)
 static void brisk_menu_sidebar_scroller_get_preferred_height(GtkWidget *widget, gint *min_height,
                                                              gint *nat_height)
 {
-        GdkScreen *screen = NULL;
+        GdkDisplay *display = NULL;
+        GdkMonitor *monitor = NULL;
         GdkWindow *window = NULL;
         GtkStyleContext *style_context = NULL;
         GtkStateFlags state_flags;
@@ -84,16 +85,24 @@ static void brisk_menu_sidebar_scroller_get_preferred_height(GtkWidget *widget, 
         gint spacing;
         GdkRectangle geom = { 0 };
         gint applet_x, applet_y = 0;
-        gint mon = 0;
 
         /* Find out where we are on screen */
         window = gtk_widget_get_window(widget);
-        gdk_window_get_origin(window, &applet_x, &applet_y);
+        if (window) {
+                gdk_window_get_origin(window, &applet_x, &applet_y);
+        }
 
-        /* Grab the geometry for the monitor we're currently on */
-        screen = gtk_widget_get_screen(widget);
-        mon = gdk_screen_get_monitor_at_point(screen, applet_x, applet_y);
-        gdk_screen_get_monitor_geometry(screen, mon, &geom);
+        /* Grab the work area for the monitor we're currently on */
+        display = gtk_widget_get_display(widget);
+        monitor = gdk_display_get_monitor_at_point(display, applet_x, applet_y);
+        if (!monitor) {
+                monitor = gdk_display_get_primary_monitor(display);
+        }
+        if (!monitor) {
+                *min_height = *nat_height = 0;
+                return;
+        }
+        gdk_monitor_get_workarea(monitor, &geom);
 
         gint max_height = geom.height - 200;
 
