@@ -2,7 +2,7 @@
 
 function do_gettext()
 {
-    xgettext --package-name=brisk-menu --package-version=0.6.2 $* --default-domain=brisk-menu --join-existing --from-code=UTF-8 --no-wrap --keyword=_
+    xgettext --package-name=brisk-menu --package-version=0.6.5 $* --default-domain=brisk-menu --join-existing --from-code=UTF-8 --no-wrap --keyword=_
 }
 
 function do_intltool()
@@ -33,4 +33,4 @@ for file in `find src -name "*.in"`; do
     fi
 done
 
-mv brisk-menu.po ../brisk-menu-translations/brisk-menu.pot
+mv brisk-menu.po subprojects/translations/brisk-menu.pot

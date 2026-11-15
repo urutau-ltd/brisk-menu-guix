@@ -1,6 +1,6 @@
 project(
     'brisk-menu',
-    version: '0.6.2',
+    version: '0.6.5',
     license: 'GPL-2.0-only',
 )
 
