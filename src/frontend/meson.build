@@ -5,7 +5,6 @@ libfrontend_sources = [
     'menu-grabs.c',
     'menu-keyboard.c',
     'menu-loader.c',
-    'menu-loader.c',
     'menu-search.c',
     'menu-session.c',
     'menu-settings.c',

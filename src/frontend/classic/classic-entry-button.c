@@ -102,10 +102,8 @@ static void brisk_classic_entry_button_init(BriskClassicEntryButton *self)
         gtk_label_set_width_chars(GTK_LABEL(label), 25);
         self->label = label;
         g_object_set(self->label, "halign", GTK_ALIGN_START, "valign", GTK_ALIGN_CENTER, NULL);
+        gtk_label_set_xalign(GTK_LABEL(self->label), 0.0f);
         gtk_box_pack_start(GTK_BOX(layout), label, TRUE, TRUE, 0);
-        G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-        gtk_misc_set_alignment(GTK_MISC(self->label), 0.0, 0.5);
-        G_GNUC_END_IGNORE_DEPRECATIONS
 
         /* Button specific fixes */
         gtk_button_set_relief(GTK_BUTTON(self), GTK_RELIEF_NONE);

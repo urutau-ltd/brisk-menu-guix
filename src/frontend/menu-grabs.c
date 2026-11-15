@@ -87,61 +87,6 @@ static gboolean brisk_menu_window_unmap(GtkWidget *widget, __brisk_unused__ gpoi
 /**
  * Grab the input events using the GdkSeat
  */
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION < 20
-/* Pre 3.20 grab behaviour */
-static void brisk_menu_window_grab(BriskMenuWindow *self)
-{
-        GdkDisplay *display = NULL;
-        GdkWindow *window = NULL;
-        GdkGrabStatus st;
-        GdkDeviceManager *manager = NULL;
-        GdkDevice *pointer, *keyboard = NULL;
-
-        if (self->grabbed) {
-                return;
-        }
-
-        window = gtk_widget_get_window(GTK_WIDGET(self));
-        if (!window) {
-                g_warning("Attempting to grab BriskMenuWindow when not realized");
-                return;
-        }
-
-        display = gtk_widget_get_display(GTK_WIDGET(self));
-        manager = gdk_display_get_device_manager(display);
-
-        pointer = gdk_device_manager_get_client_pointer(manager);
-        keyboard = gdk_device_get_associated_device(pointer);
-
-        st = gdk_device_grab(pointer,
-                             window,
-                             GDK_OWNERSHIP_NONE,
-                             TRUE,
-                             POINTER_EVENTS,
-                             NULL,
-                             GDK_CURRENT_TIME);
-
-        if (st != GDK_GRAB_SUCCESS) {
-                return;
-        }
-        if (keyboard) {
-                st = gdk_device_grab(keyboard,
-                                     window,
-                                     GDK_OWNERSHIP_NONE,
-                                     TRUE,
-                                     KEYBOARD_EVENTS,
-                                     NULL,
-                                     GDK_CURRENT_TIME);
-                if (st != GDK_GRAB_SUCCESS) {
-                        gdk_device_ungrab(keyboard, GDK_CURRENT_TIME);
-                        return;
-                }
-        }
-
-        self->grabbed = TRUE;
-        gtk_grab_add(GTK_WIDGET(self));
-}
-#else
 G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 static void brisk_menu_window_grab(BriskMenuWindow *self)
 {
@@ -178,38 +123,10 @@ static void brisk_menu_window_grab(BriskMenuWindow *self)
         }
 }
 G_GNUC_END_IGNORE_DEPRECATIONS
-#endif
 
 /**
  * Ungrab a previous grab by this widget
  */
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION < 20
-/* Pre 3.20 behaviour */
-static void brisk_menu_window_ungrab(BriskMenuWindow *self)
-{
-        GdkDisplay *display = NULL;
-        GdkDeviceManager *manager = NULL;
-        GdkDevice *pointer, *keyboard = NULL;
-
-        if (!self->grabbed) {
-                return;
-        }
-
-        display = gtk_widget_get_display(GTK_WIDGET(self));
-        manager = gdk_display_get_device_manager(display);
-
-        pointer = gdk_device_manager_get_client_pointer(manager);
-        keyboard = gdk_device_get_associated_device(pointer);
-
-        gtk_grab_remove(GTK_WIDGET(self));
-
-        gdk_device_ungrab(pointer, GDK_CURRENT_TIME);
-        if (keyboard) {
-                gdk_device_ungrab(keyboard, GDK_CURRENT_TIME);
-        }
-        self->grabbed = FALSE;
-}
-#else
 G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 static void brisk_menu_window_ungrab(BriskMenuWindow *self)
 {
@@ -228,7 +145,6 @@ static void brisk_menu_window_ungrab(BriskMenuWindow *self)
         self->grabbed = FALSE;
 }
 G_GNUC_END_IGNORE_DEPRECATIONS
-#endif
 
 /**
  * Grab was broken, most likely due to a window within our application

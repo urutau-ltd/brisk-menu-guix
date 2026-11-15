@@ -1,7 +1,7 @@
 project(
     'brisk-menu',
     ['c'],
-    version: '0.6.4',
+    version: '0.6.5',
     license: [
         'GPL-2.0',
         'CC-BY-SA-4.0',
@@ -32,10 +32,10 @@ am_cflags = [
 ]
 
 gtk_version_flags = [
-    '-DGDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_18',
-    '-DGDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_18',
-    '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_44',
-    '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_44',
+    '-DGDK_VERSION_MAX_ALLOWED=GDK_VERSION_3_24',
+    '-DGDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_22',
+    '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_50',
+    '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_50',
 ]
 
 # Add our main flags
@@ -51,9 +51,9 @@ add_global_arguments(gtk_version_flags, language: 'c')
 gnome = import('gnome')
 
 # Required minimum versions
-gtk_min_version = '>= 3.18.0'
-mate_min_version = '>= 1.21.0'
-glib_min_version = '>= 2.44.0'
+gtk_min_version = '>= 3.22.0'
+mate_min_version = '>= 1.24.0'
+glib_min_version = '>= 2.50.0'
 
 # GTK/UI deps
 dep_gtk3 = dependency('gtk+-3.0', version: gtk_min_version)
@@ -75,14 +75,14 @@ path_datadir = join_paths(path_prefix, get_option('datadir'))
 path_libexecdir = join_paths(path_prefix, get_option('libexecdir'))
 path_bindir = join_paths(path_prefix, get_option('bindir'))
 path_localedir = join_paths(path_prefix, get_option('localedir'))
-podir = join_paths(meson.source_root(), 'subprojects', 'translations')
+podir = join_paths(meson.project_source_root(), 'subprojects', 'translations')
 
 # Sort out config.h now
 cdata = configuration_data()
 
 # General options..
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
-cdata.set_quoted('PACKAGE_URL', 'https://getsol.us')
+cdata.set_quoted('PACKAGE_URL', 'https://codeberg.org/guix-mate/brisk-menu-guix')
 
 # Ensure locales will work
 cdata.set_quoted('GETTEXT_PACKAGE', meson.project_name())

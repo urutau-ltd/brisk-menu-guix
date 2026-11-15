@@ -175,9 +175,7 @@ static void brisk_menu_applet_init(BriskMenuApplet *self)
 
         /* Fix label alignment */
         gtk_widget_set_halign(label, GTK_ALIGN_START);
-        G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-        gtk_misc_set_alignment(GTK_MISC(label), 0.0f, 0.5f);
-        G_GNUC_END_IGNORE_DEPRECATIONS
+        gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
 
         /* Applet hookup */
         mate_panel_applet_set_flags(MATE_PANEL_APPLET(self), MATE_PANEL_APPLET_EXPAND_MINOR);
