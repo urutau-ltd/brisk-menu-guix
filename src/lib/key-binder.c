@@ -49,6 +49,8 @@ typedef struct KeyBinding {
         GdkModifierType mods;
         BinderFunc func;
         gpointer udata;
+        Display *display;
+        Window root;
 } KeyBinding;
 
 static GdkFilterReturn brisk_key_binder_filter(GdkXEvent *xevent, GdkEvent *event, gpointer v);
@@ -121,10 +123,17 @@ static void brisk_key_binder_class_init(BriskKeyBinderClass *klazz)
  */
 static void brisk_key_binder_init(BriskKeyBinder *self)
 {
+        GdkDisplay *display = NULL;
         GdkWindow *root = NULL;
 
         self->bindings =
             g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)free_keybinding);
+
+        display = gdk_display_get_default();
+        if (!display || !GDK_IS_X11_DISPLAY(display)) {
+                g_message("Global hotkeys require X11; disabled on this display");
+                return;
+        }
 
         root = gdk_get_default_root_window();
         if (!root) {
@@ -135,69 +144,81 @@ static void brisk_key_binder_init(BriskKeyBinder *self)
         gdk_window_add_filter(root, brisk_key_binder_filter, self);
 }
 
-static char* get_window_manager(void)
+static char *get_window_manager(void)
 {
-        Window *xwindow;
+        GdkDisplay *gdk_display = gdk_display_get_default();
+        Display *display = GDK_DISPLAY_XDISPLAY(gdk_display);
+        Window *xwindow = NULL;
         Window wm_window;
-        Atom type;
-        gint format;
-        gulong nitems;
-        gulong bytes_after;
+        Atom type = None;
+        Atom utf8_string = None;
+        Atom wm_name = None;
+        Atom wm_check = None;
+        gint format = 0;
+        gulong nitems = 0;
+        gulong bytes_after = 0;
+        guchar *val = NULL;
+        gchar *wm = NULL;
+        int result = Success;
 
-        Atom wm_check = gdk_x11_get_xatom_by_name ("_NET_SUPPORTING_WM_CHECK");
+        wm_check = gdk_x11_get_xatom_by_name("_NET_SUPPORTING_WM_CHECK");
+        result = XGetWindowProperty(display,
+                                    GDK_ROOT_WINDOW(),
+                                    wm_check,
+                                    0,
+                                    G_MAXLONG,
+                                    False,
+                                    XA_WINDOW,
+                                    &type,
+                                    &format,
+                                    &nitems,
+                                    &bytes_after,
+                                    (guchar **)&xwindow);
 
-        XGetWindowProperty (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), GDK_ROOT_WINDOW (),
-                            wm_check, 0, G_MAXLONG, False, XA_WINDOW, &type, &format,
-                            &nitems, &bytes_after, (guchar **) &xwindow);
-
-        if (type != XA_WINDOW)
-        {
-                return g_strdup ("Unknown");
+        if (result != Success || type != XA_WINDOW || !xwindow) {
+                return g_strdup("Unknown");
         }
 
-        gdk_error_trap_push ();
-        XSelectInput (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), *xwindow,
-                      StructureNotifyMask | PropertyChangeMask);
-        XSync (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()), False);
+        gdk_x11_display_error_trap_push(gdk_display);
+        XSelectInput(display, *xwindow, StructureNotifyMask | PropertyChangeMask);
+        XSync(display, False);
 
-        if (gdk_error_trap_pop ())
-        {
-                XFree (xwindow);
-                return g_strdup ("Unknown");
+        if (gdk_x11_display_error_trap_pop(gdk_display)) {
+                XFree(xwindow);
+                return g_strdup("Unknown");
         }
 
         wm_window = *xwindow;
-        XFree (xwindow);
+        XFree(xwindow);
 
-        Atom utf8_string = gdk_x11_get_xatom_by_name ("UTF8_STRING");
-        Atom wm_name = gdk_x11_get_xatom_by_name ("_NET_WM_NAME");
-        gchar *val;
-        gchar *wm;
-        int result;
+        utf8_string = gdk_x11_get_xatom_by_name("UTF8_STRING");
+        wm_name = gdk_x11_get_xatom_by_name("_NET_WM_NAME");
 
-        val = NULL;
+        gdk_x11_display_error_trap_push(gdk_display);
+        result = XGetWindowProperty(display,
+                                    wm_window,
+                                    wm_name,
+                                    0,
+                                    G_MAXLONG,
+                                    False,
+                                    utf8_string,
+                                    &type,
+                                    &format,
+                                    &nitems,
+                                    &bytes_after,
+                                    &val);
 
-        gdk_error_trap_push ();
-        result = XGetWindowProperty (GDK_DISPLAY_XDISPLAY(gdk_display_get_default()),
-                                     wm_window,
-                                     wm_name,
-                                     0, G_MAXLONG,
-                                     False, utf8_string,
-                                     &type, &format, &nitems,
-                                     &bytes_after, (guchar **) &val);
-
-        if (gdk_error_trap_pop () || result != Success || type != utf8_string || format != 8 ||
-            nitems == 0 || !g_utf8_validate (val, (gssize)nitems, NULL))
-        {
+        if (gdk_x11_display_error_trap_pop(gdk_display) || result != Success ||
+            type != utf8_string || format != 8 || nitems == 0 || !val ||
+            !g_utf8_validate((const gchar *)val, (gssize)nitems, NULL)) {
                 wm = NULL;
-        }
-        else
-        {
-                wm = g_strndup (val, nitems);
+        } else {
+                wm = g_strndup((const gchar *)val, nitems);
         }
 
-        if (val)
-                XFree (val);
+        if (val) {
+                XFree(val);
+        }
 
         return wm;
 }
@@ -217,6 +238,9 @@ static GdkFilterReturn brisk_key_binder_filter(GdkXEvent *xevent, GdkEvent *even
         KeySym keysym;
 
         self = BRISK_KEY_BINDER(v);
+        if (!self->root_window) {
+                return GDK_FILTER_CONTINUE;
+        }
         display = GDK_WINDOW_XDISPLAY(self->root_window);
 
         if (xev->type != KeyRelease && xev->type != KeyPress && xev->type != ButtonPress) {
@@ -303,20 +327,31 @@ static GdkFilterReturn brisk_key_binder_filter(GdkXEvent *xevent, GdkEvent *even
 gboolean brisk_key_binder_bind(BriskKeyBinder *self, const gchar *shortcut, BinderFunc func,
                                gpointer v)
 {
-        guint keysym;
-        GdkModifierType mod;
+        GdkDisplay *gdk_display = NULL;
+        guint keysym = 0;
+        GdkModifierType mod = 0;
         Display *display = NULL;
         Window id;
         KeyCode key;
         KeyBinding *bind = NULL;
+        gboolean failed = FALSE;
 
+        if (!self->root_window) {
+                g_message("Global hotkeys are unavailable on this display");
+                return FALSE;
+        }
         if (g_hash_table_contains(self->bindings, shortcut)) {
                 return FALSE;
         }
 
         gtk_accelerator_parse(shortcut, &keysym, &mod);
+        if (keysym == 0) {
+                return FALSE;
+        }
+
         display = GDK_WINDOW_XDISPLAY(self->root_window);
         id = GDK_WINDOW_XID(self->root_window);
+        gdk_display = gdk_window_get_display(self->root_window);
 
         key = XKeysymToKeycode(display, keysym);
         if (key == 0) {
@@ -328,24 +363,32 @@ gboolean brisk_key_binder_bind(BriskKeyBinder *self, const gchar *shortcut, Bind
                               .keycode = key,
                               .mods = mod,
                               .func = func,
-                              .udata = v };
+                              .udata = v,
+                              .display = display,
+                              .root = id };
 
         g_hash_table_insert(self->bindings, g_strdup(shortcut), bind);
 
-        gdk_error_trap_push();
+        gdk_x11_display_error_trap_push(gdk_display);
         for (size_t i = 0; i < G_N_ELEMENTS(_modifiers); i++) {
                 GdkModifierType m = _modifiers[i];
                 XGrabKey(display, key, mod | m, id, TRUE, GrabModeAsync, GrabModeAsync);
         }
-        gdk_flush();
 
         if (!mod) {
-                gdk_error_trap_push();
                 /* We grab Super+click so that we can forward it to the window manager and allow
                  * Super+click bindings (window move, resize, etc.) */
                 XGrabButton(display, AnyButton, Mod4Mask, id, TRUE, ButtonPressMask, GrabModeSync,
                             GrabModeAsync, None, None);
-                gdk_flush();
+        }
+
+        failed = gdk_x11_display_error_trap_pop(gdk_display) != 0;
+        gdk_display_flush(gdk_display);
+
+        if (failed) {
+                g_message("Failed to grab global hotkey '%s'", shortcut);
+                g_hash_table_remove(self->bindings, shortcut);
+                return FALSE;
         }
 
         return TRUE;
@@ -364,19 +407,21 @@ gboolean brisk_key_binder_unbind(BriskKeyBinder *self, const gchar *shortcut)
  */
 static void free_keybinding(KeyBinding *binding)
 {
-        Display *display = NULL;
-        Window id;
-        GdkWindow *window = NULL;
-
-        window = gdk_get_default_root_window();
-        if (window) {
-                display = GDK_WINDOW_XDISPLAY(window);
-                id = GDK_WINDOW_XID(window);
-                XUngrabKey(display, binding->keycode, binding->mods, id);
-        } else {
-                g_warning("Could not find root window to XUngrabKey");
+        if (!binding->display) {
+                g_free(binding);
+                return;
         }
 
+        for (size_t i = 0; i < G_N_ELEMENTS(_modifiers); i++) {
+                GdkModifierType m = _modifiers[i];
+                XUngrabKey(binding->display, binding->keycode, binding->mods | m, binding->root);
+        }
+
+        if (!binding->mods) {
+                XUngrabButton(binding->display, AnyButton, Mod4Mask, binding->root);
+        }
+
+        XFlush(binding->display);
         g_free(binding);
 }
 

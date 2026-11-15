@@ -118,10 +118,19 @@ void brisk_menu_window_lock(BriskMenuWindow *self, __brisk_unused__ gpointer v)
         g_idle_add((GSourceFunc)brisk_menu_window_lock_real, self);
 }
 
+gboolean brisk_menu_window_setup_session_idle(gpointer v)
+{
+        BriskMenuWindow *self = v;
+
+        self->session_source_id = 0;
+        brisk_menu_window_setup_session(self);
+        return G_SOURCE_REMOVE;
+}
+
 gboolean brisk_menu_window_setup_session(BriskMenuWindow *self)
 {
         autofree(GError) *error = NULL;
-        gboolean can_shutdown = FALSE;
+        gboolean can_shutdown = TRUE;
         __brisk_unused__ gboolean is_active = FALSE;
 
         /* Sort out gnome-session dbus */
@@ -134,15 +143,21 @@ gboolean brisk_menu_window_setup_session(BriskMenuWindow *self)
             &error);
         if (error) {
                 g_warning("Failed to contact org.gnome.SessionManager: %s\n", error->message);
-                g_error_free(error);
-
-                goto saver_init;
+                g_clear_error(&error);
+                g_clear_object(&self->session);
+                self->can_shutdown = FALSE;
+        } else {
+                /* Set sensitive according to policy */
+                if (!gnome_session_manager_call_can_shutdown_sync(
+                        self->session, &can_shutdown, NULL, &error)) {
+                        g_warning("Failed to query org.gnome.SessionManager: %s\n",
+                                  error->message);
+                        g_clear_error(&error);
+                        can_shutdown = TRUE;
+                }
+                self->can_shutdown = can_shutdown;
         }
 
-        /* Set sensitive according to policy */
-        gnome_session_manager_call_can_shutdown_sync(self->session, &can_shutdown, NULL, NULL);
-
-saver_init:
         self->saver =
             mate_screen_saver_proxy_new_for_bus_sync(G_BUS_TYPE_SESSION,
                                                      G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES,
@@ -152,15 +167,24 @@ saver_init:
                                                      &error);
         if (error) {
                 g_warning("Failed to contact org.mate.ScreenSaver: %s\n", error->message);
-                return FALSE;
+                g_clear_error(&error);
+                g_clear_object(&self->saver);
+        } else {
+                /* Check the screensaver is *really* running */
+                if (!mate_screen_saver_call_get_active_sync(self->saver,
+                                                            &is_active,
+                                                            NULL,
+                                                            &error)) {
+                        g_warning("org.mate.ScreenSaver not running: %s\n", error->message);
+                        g_clear_error(&error);
+                }
         }
 
-        /* Check the screensaver is *really* running */
-        mate_screen_saver_call_get_active_sync(self->saver, &is_active, NULL, &error);
-        if (error) {
-                g_warning("org.mate.ScreenSaver not running: %s\n", error->message);
+        if (self->shutdown_widget) {
+                gtk_widget_set_sensitive(self->shutdown_widget, self->can_shutdown);
         }
-        return FALSE;
+
+        return self->session != NULL;
 }
 
 /*

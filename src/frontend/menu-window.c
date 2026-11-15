@@ -38,6 +38,15 @@ static void brisk_menu_window_dispose(GObject *obj)
 {
         BriskMenuWindow *self = BRISK_MENU_WINDOW(obj);
 
+        if (self->session_source_id > 0) {
+                g_source_remove(self->session_source_id);
+                self->session_source_id = 0;
+        }
+        if (self->toggle_source_id > 0) {
+                g_source_remove(self->toggle_source_id);
+                self->toggle_source_id = 0;
+        }
+
         g_clear_object(&self->binder);
         g_clear_pointer(&self->shortcut, g_free);
         g_clear_pointer(&self->search_term, g_free);
@@ -96,6 +105,7 @@ static void brisk_menu_window_init(BriskMenuWindow *self)
 
         self->binder = brisk_key_binder_new();
         self->launcher = brisk_menu_launcher_new();
+        self->can_shutdown = TRUE;
 
         brisk_menu_window_init_settings(self);
 }

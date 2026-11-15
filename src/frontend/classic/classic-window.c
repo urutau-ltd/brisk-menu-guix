@@ -491,7 +491,8 @@ static void brisk_classic_window_init(BriskClassicWindow *self)
         brisk_menu_window_init_backends(base);
 
         /* Hook up dbus later on */
-        g_idle_add((GSourceFunc)brisk_menu_window_setup_session, self);
+        base->session_source_id =
+            g_idle_add((GSourceFunc)brisk_menu_window_setup_session_idle, base);
 
         gtk_widget_show_all(layout);
 }
@@ -691,6 +692,7 @@ static void brisk_classic_window_setup_session_controls(BriskClassicWindow *self
         widget =
             gtk_button_new_from_icon_name("system-shutdown-symbolic", GTK_ICON_SIZE_SMALL_TOOLBAR);
         self->button_shutdown = widget;
+        BRISK_MENU_WINDOW(self)->shutdown_widget = widget;
         g_signal_connect_swapped(widget, "clicked", G_CALLBACK(brisk_menu_window_shutdown), self);
         gtk_widget_set_tooltip_text(widget, _("Turn off the device"));
         gtk_widget_set_can_focus(widget, TRUE);

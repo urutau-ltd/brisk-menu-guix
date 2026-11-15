@@ -105,6 +105,12 @@ struct _BriskMenuWindow {
         /* Session management */
         GnomeSessionManager *session;
         MateScreenSaver *saver;
+        GtkWidget *shutdown_widget;
+        gboolean can_shutdown;
+
+        /* Pending main-loop sources */
+        guint session_source_id;
+        guint toggle_source_id;
 };
 
 GtkWidget *brisk_menu_window_get_section_box(BriskMenuWindow *self, BriskBackend *backend);
@@ -137,6 +143,7 @@ void brisk_menu_window_logout(BriskMenuWindow *self, gpointer v);
 void brisk_menu_window_shutdown(BriskMenuWindow *self, gpointer v);
 void brisk_menu_window_lock(BriskMenuWindow *self, gpointer v);
 gboolean brisk_menu_window_setup_session(BriskMenuWindow *self);
+gboolean brisk_menu_window_setup_session_idle(gpointer v);
 
 /* Settings */
 void brisk_menu_window_init_settings(BriskMenuWindow *self);

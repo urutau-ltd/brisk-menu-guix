@@ -60,7 +60,10 @@ gboolean brisk_menu_window_key_release(BriskMenuWindow *self, GdkEvent *event,
  */
 static gboolean toggle_menu(BriskMenuWindow *self)
 {
-        gboolean vis = !gtk_widget_get_visible(GTK_WIDGET(self));
+        gboolean vis = FALSE;
+
+        self->toggle_source_id = 0;
+        vis = !gtk_widget_get_visible(GTK_WIDGET(self));
         if (vis) {
                 /* Cheap trick to ensure we reset our active position */
                 brisk_menu_window_set_parent_position(self, self->position);
@@ -77,7 +80,12 @@ static gboolean toggle_menu(BriskMenuWindow *self)
  */
 static void hotkey_cb(__brisk_unused__ GdkEvent *event, gpointer v)
 {
-        g_idle_add((GSourceFunc)toggle_menu, v);
+        BriskMenuWindow *self = v;
+
+        if (self->toggle_source_id > 0) {
+                return;
+        }
+        self->toggle_source_id = g_idle_add((GSourceFunc)toggle_menu, self);
 }
 
 /**

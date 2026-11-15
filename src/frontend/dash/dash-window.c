@@ -27,8 +27,8 @@ static void brisk_dash_window_associate_category(BriskMenuWindow *self, GtkWidge
 static void brisk_dash_window_on_toggled(BriskMenuWindow *self, GtkWidget *button);
 static gboolean brisk_dash_window_on_enter(BriskMenuWindow *self, GdkEvent *event,
                                            GtkWidget *button);
-static void brisk_dash_window_load_css(GtkSettings *settings, const gchar *key,
-                                       BriskDashWindow *self);
+static void brisk_dash_window_load_css(__brisk_unused__ GtkSettings *settings,
+                                       __brisk_unused__ const gchar *key, BriskDashWindow *self);
 static void brisk_dash_window_key_activate(BriskDashWindow *self, gpointer v);
 static void brisk_dash_window_activated(BriskMenuWindow *self, GtkFlowBoxChild *row, gpointer v);
 static void brisk_dash_window_set_filters_enabled(BriskDashWindow *self, gboolean enabled);
@@ -336,8 +336,8 @@ static void brisk_dash_window_init(BriskDashWindow *self)
 
         base = BRISK_MENU_WINDOW(self);
 
-        brisk_dash_window_load_css(gtk_settings, "gtk-theme-name", self);
         gtk_settings = gtk_settings_get_default();
+        brisk_dash_window_load_css(gtk_settings, "gtk-theme-name", self);
         g_signal_connect(gtk_settings,
                          "notify::gtk-theme-name",
                          G_CALLBACK(brisk_dash_window_load_css),
@@ -544,8 +544,8 @@ static gboolean brisk_dash_window_on_enter(BriskMenuWindow *self, __brisk_unused
 /**
  * Load up the CSS assets
  */
-static void brisk_dash_window_load_css(GtkSettings *settings, const gchar *key,
-                                       BriskDashWindow *self)
+static void brisk_dash_window_load_css(__brisk_unused__ GtkSettings *settings,
+                                       __brisk_unused__ const gchar *key, BriskDashWindow *self)
 {
         GtkCssProvider *css = NULL;
         GtkStyleContext *context = NULL;
