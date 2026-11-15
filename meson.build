@@ -82,7 +82,7 @@ cdata = configuration_data()
 
 # General options..
 cdata.set_quoted('PACKAGE_VERSION', meson.project_version())
-cdata.set_quoted('PACKAGE_URL', 'https://codeberg.org/guix-mate/brisk-menu-guix')
+cdata.set_quoted('PACKAGE_URL', 'https://codeberg.org/urutau-ltd/brisk-menu-guix')
 
 # Ensure locales will work
 cdata.set_quoted('GETTEXT_PACKAGE', meson.project_name())
