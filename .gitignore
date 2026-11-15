@@ -1,3 +1,4 @@
 /build/
 *.tar.xz*
 .ccls-cache/
+/subprojects/.wraplock
